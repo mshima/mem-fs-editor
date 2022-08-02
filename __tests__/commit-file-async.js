@@ -10,7 +10,9 @@ const { STATE, STATE_MODIFIED, STATE_DELETED } = require('../lib/state');
 
 const rmSync = filesystem.rmSync || filesystem.rmdirSync;
 
-// Permission mode are handled differently by windows, skip it.
+// Permission mode are handled differently by windows.
+// chmod is particulally usefull for executable bit at posix platforms but is not useful at windows platform.
+// More information can be found at Node source https://github.com/nodejs/node/blob/8cf33850bea691d8c53b2d4175c959c8549aa76c/deps/uv/src/win/fs.c#L1743-L1761
 const posixIt = process.platform === 'win32' ? it.skip : it;
 
 describe('#commitFileAsync()', () => {
