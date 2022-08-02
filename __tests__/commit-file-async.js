@@ -13,7 +13,10 @@ const rmSync = filesystem.rmSync || filesystem.rmdirSync;
 // Permission mode are handled differently by windows.
 // chmod is particularly useful for executable bit at posix platforms but is not useful at windows platform.
 // More information can be found at Node source https://github.com/nodejs/node/blob/8cf33850bea691d8c53b2d4175c959c8549aa76c/deps/uv/src/win/fs.c#L1743-L1761
-const posixIt = process.platform === 'win32' ? it.skip : it;
+// Windows only changes readonly flag and ignores user/group.
+// Use only the modes that are available at Windows.
+const READ_WRITE_MODE = 0o666;
+const READ_ONLY_MODE = 0o444;
 
 describe('#commitFileAsync()', () => {
   const outputRoot = path.join(os.tmpdir(), 'mem-fs-editor-test' + Math.random());
@@ -91,43 +94,43 @@ describe('#commitFileAsync()', () => {
     expect(filesystem.existsSync(filenameNew)).toBe(false);
   });
 
-  posixIt('set file permission', async () => {
+  it('set file permission', async () => {
     await fs.commitFileAsync({
       ...newFile,
-      stat: { mode: 0o600 },
+      stat: { mode: READ_ONLY_MODE },
     });
     // eslint-disable-next-line no-bitwise
-    expect(filesystem.statSync(filenameNew).mode & 0o777).toEqual(0o600);
+    expect(filesystem.statSync(filenameNew).mode & 0o777).toEqual(READ_ONLY_MODE);
   });
 
-  posixIt("doesn't change unmodified file permission", async () => {
+  it("doesn't change unmodified file permission", async () => {
     await fs.commitFileAsync({
       ...newFile,
-      stat: { mode: 0o600 },
+      stat: { mode: READ_ONLY_MODE },
     });
 
     await fs.commitFileAsync({
       ...newFile,
-      stat: { mode: 0o600 },
+      stat: { mode: READ_ONLY_MODE },
     });
 
     // eslint-disable-next-line no-bitwise
-    expect(filesystem.statSync(filenameNew).mode & 0o777).toEqual(0o600);
+    expect(filesystem.statSync(filenameNew).mode & 0o777).toEqual(READ_ONLY_MODE);
   });
 
-  posixIt('update file permission', async () => {
+  it('update file permission', async () => {
     await fs.commitFileAsync({
       ...newFile,
-      stat: { mode: 0o600 },
+      stat: { mode: READ_WRITE_MODE },
     });
 
     await fs.commitFileAsync({
       ...newFile,
-      stat: { mode: 0o660 },
+      stat: { mode: READ_ONLY_MODE },
     });
 
     // eslint-disable-next-line no-bitwise
-    expect(filesystem.statSync(filenameNew).mode & 0o777).toEqual(0o660);
+    expect(filesystem.statSync(filenameNew).mode & 0o777).toEqual(READ_ONLY_MODE);
   });
 
   it("doesn't readd same file to store", async () => {
