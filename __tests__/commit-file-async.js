@@ -11,7 +11,6 @@ const { STATE, STATE_MODIFIED, STATE_DELETED } = require('../lib/state');
 const rmSync = filesystem.rmSync || filesystem.rmdirSync;
 
 // Permission mode are handled differently by windows.
-// chmod is particularly useful for executable bit at posix platforms but is not useful at windows platform.
 // More information can be found at Node source https://github.com/nodejs/node/blob/8cf33850bea691d8c53b2d4175c959c8549aa76c/deps/uv/src/win/fs.c#L1743-L1761
 // Windows only changes readonly flag and ignores user/group.
 // Use only the modes that are available at Windows.
@@ -101,21 +100,6 @@ describe('#commitFileAsync()', () => {
     });
     // eslint-disable-next-line no-bitwise
     expect(filesystem.statSync(filenameNew).mode & 0o777).toEqual(READ_ONLY_MODE);
-  });
-
-  it("doesn't change unmodified file permission", async () => {
-    await fs.commitFileAsync({
-      ...newFile,
-      stat: { mode: READ_WRITE_MODE },
-    });
-
-    await fs.commitFileAsync({
-      ...newFile,
-      stat: { mode: READ_WRITE_MODE },
-    });
-
-    // eslint-disable-next-line no-bitwise
-    expect(filesystem.statSync(filenameNew).mode & 0o777).toEqual(READ_WRITE_MODE);
   });
 
   it('update file permission', async () => {
