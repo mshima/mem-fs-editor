@@ -93,7 +93,7 @@ describe('#commitFileAsync()', () => {
     expect(filesystem.existsSync(filenameNew)).toBe(false);
   });
 
-  it('set file permission', async () => {
+  it('sets file permission', async () => {
     await fs.commitFileAsync({
       ...newFile,
       stat: { mode: READ_ONLY_MODE },
@@ -102,7 +102,7 @@ describe('#commitFileAsync()', () => {
     expect(filesystem.statSync(filenameNew).mode & 0o777).toEqual(READ_ONLY_MODE);
   });
 
-  it('update file permission', async () => {
+  it('updates file permission', async () => {
     await fs.commitFileAsync({
       ...newFile,
       stat: { mode: READ_WRITE_MODE },
