@@ -45,10 +45,6 @@ describe('#commitFileAsync()', () => {
     }
   });
 
-  it('commits a modified file', async () => {
-    expect(await fs.commitFileAsync(store.get(filename))).toBe(true);
-  });
-
   it('writes a modified file to disk', async () => {
     await fs.commitFileAsync(store.get(filename));
     expect(filesystem.readFileSync(filename).toString()).toEqual('foo');
@@ -59,17 +55,17 @@ describe('#commitFileAsync()', () => {
     expect(store.add.callCount).toEqual(2);
   });
 
-  it('commits non existing file', async () => {
-    expect(await fs.commitFileAsync(newFile)).toBe(true);
+  it('writes non existing file to disk', async () => {
+    await fs.commitFileAsync(newFile);
+    expect(filesystem.existsSync(filenameNew)).toBe(true);
   });
 
   it("doesn't commit an unmodified file", async () => {
-    expect(
-      await fs.commitFileAsync({
-        path: filenameNew,
-        contents: 'contents',
-      })
-    ).toBe(false);
+    await fs.commitFileAsync({
+      ...newFile,
+      [STATE]: undefined,
+    });
+    expect(filesystem.existsSync(filenameNew)).toBe(false);
   });
 
   it('throws if the file is a directory', async () => {
