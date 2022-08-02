@@ -106,16 +106,16 @@ describe('#commitFileAsync()', () => {
   it("doesn't change unmodified file permission", async () => {
     await fs.commitFileAsync({
       ...newFile,
-      stat: { mode: READ_ONLY_MODE },
+      stat: { mode: READ_WRITE_MODE },
     });
 
     await fs.commitFileAsync({
       ...newFile,
-      stat: { mode: READ_ONLY_MODE },
+      stat: { mode: READ_WRITE_MODE },
     });
 
     // eslint-disable-next-line no-bitwise
-    expect(filesystem.statSync(filenameNew).mode & 0o777).toEqual(READ_ONLY_MODE);
+    expect(filesystem.statSync(filenameNew).mode & 0o777).toEqual(READ_WRITE_MODE);
   });
 
   it('update file permission', async () => {
