@@ -46,19 +46,19 @@ export function globify(inputFilePath: string | string[]): string | string[] {
     return filePath;
   }
 
-  if (!fs.existsSync(filePath)) {
+  try {
+    const fsStats = fs.statSync(filePath);
+    if (fsStats.isFile()) {
+      return filePath;
+    }
+
+    if (fsStats.isDirectory()) {
+      return normalize(path.join(filePath, '**'));
+    }
+  } catch {
     // The target of a pattern who's not a glob and doesn't match an existing
     // entity on the disk is ambiguous. As such, match both files and directories.
     return [filePath, normalize(path.join(filePath, '**'))];
-  }
-
-  const fsStats = fs.statSync(filePath);
-  if (fsStats.isFile()) {
-    return filePath;
-  }
-
-  if (fsStats.isDirectory()) {
-    return normalize(path.join(filePath, '**'));
   }
 
   throw new Error('Only file path or directory path are supported.');

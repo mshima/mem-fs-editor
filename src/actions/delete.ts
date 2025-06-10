@@ -5,7 +5,7 @@ import normalize from 'normalize-path';
 
 import type { MemFsEditor, MemFsEditorFile } from '../index.js';
 import type { Store } from 'mem-fs';
-import { setDeletedFileState } from '../state.js';
+import { isFileStateDeleted, setDeletedFileState } from '../state.js';
 import { globify } from '../util.js';
 
 function deleteFile(path: string, store: Store<MemFsEditorFile>) {
@@ -18,18 +18,28 @@ function deleteFile(path: string, store: Store<MemFsEditorFile>) {
 export default function deleteAction(
   this: MemFsEditor,
   paths: string | string[],
-  options?: { globOptions?: Omit<Parameters<typeof globSync>[0], 'patterns'> },
+  options: { globOptions?: Omit<Parameters<typeof globSync>[0], 'patterns'> } = {},
 ) {
   if (!Array.isArray(paths)) {
     paths = [paths];
   }
 
-  paths = paths.map((filePath) => path.resolve(filePath));
-  paths = globify(paths);
-  options ||= {};
+  const onStoreFiles: Set<string> = new Set();
+  const notFound: Set<string> = new Set();
+  for (const filePath of paths) {
+    if (!this.store.existsInMemory(filePath)) {
+      notFound.add(filePath);
+    } else if (this.store.get(filePath).contents !== null) {
+      onStoreFiles.add(filePath);
+    } else if (!isFileStateDeleted(this.store.get(filePath))) {
+      notFound.add(filePath);
+    }
+  }
+
+  paths = globify([...notFound]);
 
   const globOptions = options.globOptions || {};
-  const files = globSync(paths, { ...globOptions, absolute: true, onlyFiles: true });
+  const files = globSync(paths, { ...globOptions, absolute: true, onlyFiles: true }).map((p) => path.resolve(p));
   files.forEach((file) => {
     deleteFile(file, this.store);
   });
@@ -38,5 +48,9 @@ export default function deleteAction(
     if (multimatch([normalize(file.path)], paths).length !== 0) {
       deleteFile(file.path, this.store);
     }
+  });
+
+  onStoreFiles.forEach((filePath) => {
+    deleteFile(filePath, this.store);
   });
 }
